@@ -4,31 +4,44 @@ using UnityEngine;
 
 public class Gravity : MonoBehaviour
 {
-    public Transform[] celestialBodies; // Assign Moon and Earth in the Inspector
+    // Gravitationskonstanten
+    public float gravitationalConstant = 1f;
 
-    public float gravitationalConstant = 5f;
-
-    void Update()
+    private void FixedUpdate()
     {
         ApplyGravity();
     }
 
     void ApplyGravity()
     {
-        foreach (Transform body1 in celestialBodies)
+        // Hitta alla kroppar
+        GameObject[] objectsWithRigidbody = GameObject.FindGameObjectsWithTag("GravityObject");
+
+        foreach (GameObject obj in objectsWithRigidbody)
         {
-            foreach (Transform body2 in celestialBodies)
+            if (obj != gameObject) // Undvik att påverka sig själv
             {
-                if (body1 != body2)
+                Rigidbody2D objRigidbody = obj.GetComponent<Rigidbody2D>();
+                Rigidbody2D thisRigidbody = GetComponent<Rigidbody2D>();
+
+                if (objRigidbody != null && thisRigidbody != null)
                 {
-                    Vector2 direction = body2.position - body1.position;
-                    float distance = direction.magnitude;
+                    // Beräkna avståndet mellan objekten
+                    float distance = Vector2.Distance(obj.transform.position, transform.position);
 
-                    float forceMagnitude = gravitationalConstant * (body1.GetComponent<Rigidbody>().mass * body2.GetComponent<Rigidbody>().mass) / Mathf.Pow(distance, 2);
+                    // Beräkna kraften enligt Newtons gravitationslag
+                    float forceMagnitude = (gravitationalConstant * objRigidbody.mass * thisRigidbody.mass) / Mathf.Pow(distance, 2);
 
-                    Vector2 force = direction.normalized * forceMagnitude;
+                    // Beräkna kraftvektorn
+                    Vector2 forceDirection = (obj.transform.position - transform.position).normalized;
+                    Vector2 force = forceDirection * forceMagnitude;
 
-                    body1.GetComponent<Rigidbody>().AddForce(force);
+                    // Debug.Log för att övervaka avstånd och kraft
+                    Debug.Log($"Distance between {gameObject.name} and {obj.name}: {distance}");
+                    Debug.Log($"Force applied to {obj.name}: Magnitude = {forceMagnitude}, Direction = {forceDirection}");
+
+                    // Applicera kraften på objektet
+                    objRigidbody.AddForce(force);
                 }
             }
         }
