@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - GravityObject
+  - Planet
   layers:
   - Default
   - TransparentFX
