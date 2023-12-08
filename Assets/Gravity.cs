@@ -5,7 +5,15 @@ using UnityEngine;
 public class Gravity : MonoBehaviour
 {
     // Gravitationskonstanten
-    public float gravitationalConstant = 1f;
+    public float gravitationalConstant = 0.1f;
+
+    // Initial impuls för omloppsbana
+    public float initialOrbitImpulse = 0.1f;
+
+    private void Start()
+    {
+        ApplyInitialOrbitImpulse();
+    }
 
     private void FixedUpdate()
     {
@@ -14,12 +22,13 @@ public class Gravity : MonoBehaviour
 
     void ApplyGravity()
     {
-        // Hitta alla kroppar
+        // Hitta alla kroppar med Rigidbody2D och tagen "GravityObject"
         GameObject[] objectsWithRigidbody = GameObject.FindGameObjectsWithTag("GravityObject");
 
         foreach (GameObject obj in objectsWithRigidbody)
         {
-            if (obj != gameObject) // Undvik att påverka sig själv
+            // Undvik att påverka sig själv
+            if (obj != gameObject)
             {
                 Rigidbody2D objRigidbody = obj.GetComponent<Rigidbody2D>();
                 Rigidbody2D thisRigidbody = GetComponent<Rigidbody2D>();
@@ -32,18 +41,30 @@ public class Gravity : MonoBehaviour
                     // Beräkna kraften enligt Newtons gravitationslag
                     float forceMagnitude = (gravitationalConstant * objRigidbody.mass * thisRigidbody.mass) / Mathf.Pow(distance, 2);
 
-                    // Beräkna kraftvektorn
-                    Vector2 forceDirection = (obj.transform.position - transform.position).normalized;
-                    Vector2 force = forceDirection * forceMagnitude;
+                    // Beräkna kraftriktningen (korrigerad rad)
+                    Vector2 forceDirection = (transform.position - obj.transform.position).normalized;
 
-                    // Debug.Log för att övervaka avstånd och kraft
-                    Debug.Log($"Distance between {gameObject.name} and {obj.name}: {distance}");
-                    Debug.Log($"Force applied to {obj.name}: Magnitude = {forceMagnitude}, Direction = {forceDirection}");
+                    // Beräkna kraftvektorn
+                    Vector2 force = forceDirection * forceMagnitude;
 
                     // Applicera kraften på objektet
                     objRigidbody.AddForce(force);
                 }
             }
+        }
+    }
+
+    void ApplyInitialOrbitImpulse()
+    {
+        // Kontrollera om objektet är månen genom namn
+        if (gameObject.name == "Moon")
+        {
+            // Hitta riktningen från månen till jorden
+            Vector2 orbitDirection = (Vector2.zero - (Vector2)transform.position).normalized;
+
+            // Applicera impuls vinkelrätt mot omloppsriktningen
+            Rigidbody2D moonRigidbody = GetComponent<Rigidbody2D>();
+            moonRigidbody.AddForce(Vector2.Perpendicular(orbitDirection) * initialOrbitImpulse, ForceMode2D.Impulse);
         }
     }
 }
